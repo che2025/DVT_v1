@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DVT Test Report Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-4">
+                        DVT Test Report Generator
+                    </h1>
+                    <p class="lead mb-4">
+                        AI-powered system that processes protocol documents and test data to generate comprehensive DVT reports automatically
+                    </p>
+                    <div class="d-flex justify-content-center gap-4">
+                        <div class="text-center">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p class="mb-0"><strong>Reduces</strong><br>1-5 days → Minutes</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i>
+                            <p class="mb-0"><strong>Consistent</strong><br>Standardized Reports</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-brain fa-2x mb-2"></i>
+                            <p class="mb-0"><strong>AI-Powered</strong><br>Smart Analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-upload me-2"></i>Generate DVT Test Report
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="reportForm" action="/generate" method="post" enctype="multipart/form-data" novalidate>
+                            <!-- Report Configuration -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="title" class="form-label">Report Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           placeholder="DVT Battery Life Test Report" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="report_number" class="form-label">Report Number <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">RPT-</span>
+                                        <input type="text" class="form-control" id="report_number" name="report_number" 
+                                               placeholder="001" pattern="[0-9]+" title="Please enter numbers only" required>
+                                    </div>
+                                    <small class="text-muted">Enter numbers only (e.g., 001)</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="revision" class="form-label">Revision <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="revision" name="revision" 
+                                           placeholder="001" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label for="project_name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="project_name" name="project_name" 
+                                           placeholder="G7 GSS Transmitter" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="protocol_number" class="form-label">Protocol Number</label>
+                                    <input type="text" class="form-control" id="protocol_number" name="protocol_number" 
+                                           placeholder="PT-903900">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="document_owner" class="form-label">Document Owner <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="document_owner" name="document_owner" 
+                                           placeholder="John Smith" required>
+                                </div>
+                            </div>
+
+                            <!-- File Upload Areas -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Protocol Document (.docx) <span class="text-danger">*</span></label>
+                                    <div class="upload-area" onclick="handleUploadAreaClick(event, 'protocol_file')">
+                                        <i class="fas fa-file-word fa-3x text-muted mb-3"></i>
+                                        <p class="mb-2">Click to upload protocol document</p>
+                                        <small class="text-muted">Accepted: DOCX files</small>
+                                        <input type="file" id="protocol_file" name="protocol_file" 
+                                               accept=".docx" style="display: none;">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Test Data Files (.xlsx) <span class="text-danger">*</span></label>
+                                    <div class="upload-area" onclick="handleUploadAreaClick(event, 'data_files')">
+                                        <i class="fas fa-file-excel fa-3x text-muted mb-3"></i>
+                                        <p class="mb-2">Click to upload test data</p>
+                                        <small class="text-muted">Accepted: XLSX files</small>
+                                        <input type="file" id="data_files" name="data_files" 
+                                               accept=".xlsx,.xls" multiple style="display: none;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Device Configuration Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="fw-bold text-primary mb-3">Device Configuration</h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Test Data Type <span class="text-danger">*</span></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="test_data_type" 
+                                                   id="test_type_variable" value="Variable" required>
+                                            <label class="form-check-label" for="test_type_variable">Variable</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="test_data_type" 
+                                                   id="test_type_attribute" value="Attribute" required>
+                                            <label class="form-check-label" for="test_type_attribute">Attribute</label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Select the type of test data being analyzed</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Were the test units sterilized? <span class="text-danger">*</span></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="units_sterilized" 
+                                                   id="sterilized_yes" value="true" required>
+                                            <label class="form-check-label" for="sterilized_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="units_sterilized" 
+                                                   id="sterilized_no" value="false" required>
+                                            <label class="form-check-label" for="sterilized_no">No</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Any modifications made not related to manufacturing? <span class="text-danger">*</span></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="units_modified" 
+                                                   id="modified_yes" value="true" required onchange="setupModificationDetails()">
+                                            <label class="form-check-label" for="modified_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="units_modified" 
+                                                   id="modified_no" value="false" required onchange="setupModificationDetails()">
+                                            <label class="form-check-label" for="modified_no">No</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Were all equipment verified as calibrated at time of use? <span class="text-danger">*</span></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="calibration_verified" 
+                                                   id="calibration_yes" value="true" required>
+                                            <label class="form-check-label" for="calibration_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="calibration_verified" 
+                                                   id="calibration_no" value="false" required>
+                                            <label class="form-check-label" for="calibration_no">No</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Modification Details Section -->
+                            <div class="row mb-4">
+                                <div class="col-12" id="modification_details" style="display: none;">
+                                    <label for="modification_description" class="form-label">
+                                        Modification Details <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control" id="modification_description" name="modification_description" 
+                                              rows="3" placeholder="Example: RC installation, hardware modifications, etc."></textarea>
+                                    <small class="text-muted">Please describe the modifications made outside normal manufacturing</small>
+                                </div>
+                            </div>
+
+                            <!-- Test Execution Chronology Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label class="form-label">Test Execution Chronology (Optional)</label>
+                                    <p class="small text-muted">
+                                        Provide test execution start and end dates and relevant conditioning dates if the conditioning was NOT part of the build instructions. 
+                                        For example, sterilization is normally part of the build instructions and do not need to be added here, 
+                                        while distribution simulation is usually not part of the build instructions and should be added here.
+                                    </p>
+                                    
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="mb-0">Chronology Steps</h6>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addChronologyRow()">
+                                                    <i class="fas fa-plus me-1"></i>Add Row
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="chronologyTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th style="width: 25%;">Step</th>
+                                                            <th style="width: 25%;">Start Date</th>
+                                                            <th style="width: 25%;">End Date</th>
+                                                            <th style="width: 20%;">Location</th>
+                                                            <th style="width: 5%;">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="chronologyBody">
+                                                        <!-- Initial empty row -->
+                                                        <tr class="chronology-row">
+                                                            <td><input type="text" class="form-control form-control-sm chronology-step" placeholder="e.g., Distribution Simulation"></td>
+                                                            <td><input type="date" class="form-control form-control-sm chronology-start-date"></td>
+                                                            <td><input type="date" class="form-control form-control-sm chronology-end-date"></td>
+                                                            <td><input type="text" class="form-control form-control-sm chronology-location" placeholder="e.g., Lab A"></td>
+                                                            <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeChronologyRow(this)"><i class="fas fa-trash"></i></button></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <!-- Hidden input to store JSON data -->
+                                            <input type="hidden" id="test_execution_chronology" name="test_execution_chronology" value="[]">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Test Result Analysis Images Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label class="form-label">Test Result Analysis Images (Optional)</label>
+                                    <p class="small text-muted">
+                                        Upload images (JPG, PNG) for test result analysis. Maximum 10MB per file.
+                                        Images will be included in the Test Result Analysis section of the report.
+                                    </p>
+                                    
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="mb-0">Analysis Images</h6>
+                                            </div>
+                                            
+                                            <!-- File input (hidden) -->
+                                            <input type="file" 
+                                                   id="analysisImages" 
+                                                   name="analysis_images" 
+                                                   multiple 
+                                                   accept=".jpg,.jpeg,.png" 
+                                                   style="display: none;"
+                                                   onchange="handleImageSelection(this)">
+                                            
+                                            <!-- Clickable upload area -->
+                                            <div class="upload-area border-2 border-dashed rounded p-4 text-center" 
+                                                 id="uploadArea"
+                                                 style="cursor: pointer; transition: all 0.3s ease;"
+                                                 onclick="document.getElementById('analysisImages').click()"
+                                                 ondrop="handleImageDrop(event)" 
+                                                 ondragover="handleDragOver(event)"
+                                                 ondragleave="handleDragLeave(event)">
+                                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
+                                                <p class="mb-2"><strong>Drop images here or click to select</strong></p>
+                                                <p class="small text-muted mb-0">Supports: JPG, PNG (Max 10MB each)</p>
+                                            </div>
+                                            
+                                            <!-- Selected images display -->
+                                            <div id="selectedImages" class="mt-3" style="display: none;">
+                                                <h6 class="mb-2">Selected Images:</h6>
+                                                <div id="imageList" class="row"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Optional Fields -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label for="jira_tickets" class="form-label">JIRA Ticket Numbers (Optional)</label>
+                                    <input type="text" class="form-control" id="jira_tickets" name="jira_tickets" 
+                                           placeholder="SHAD-123, SHAD-456 (comma-separated)">
+                                    <small class="text-muted">For defective unit investigations</small>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-magic me-2"></i>Generate DVT Report
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- How it Works Section -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h3 class="text-center mb-4">How It Works</h3>
+                        <p class="text-center text-muted mb-5">Three simple steps to generate your DVT report</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <span class="h4 mb-0">1</span>
+                                </div>
+                                <h5>Upload Files</h5>
+                                <p class="text-muted">Upload your protocol document (.docx) and test data files (.xlsx)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <span class="h4 mb-0">2</span>
+                                </div>
+                                <h5>AI Processing</h5>
+                                <p class="text-muted">AI analyzes your documents and generates all 13 required report sections</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <span class="h4 mb-0">3</span>
+                                </div>
+                                <h5>Download Report</h5>
+                                <p class="text-muted">Get your complete DVT report in professional Word format</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Supported Files Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Supported File Types</h6>
+                                    <p class="mb-0">
+                                        <strong>Protocol:</strong> Microsoft Word (.docx) | 
+                                        <strong>Test Data:</strong> Excel (.xlsx, .xls) | 
+                                        <strong>Processing Time:</strong> ~30 seconds
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <i class="fas fa-file-word fa-2x text-primary me-2"></i>
+                                    <i class="fas fa-file-excel fa-2x text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/upload.js?v=20251010_v4"></script>
+</body>
+</html>
