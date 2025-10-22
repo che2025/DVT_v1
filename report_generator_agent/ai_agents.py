@@ -129,7 +129,7 @@ class ScopeAndPurposeAgent(BaseDVTAgent):
         Returns:
             TaskResult with formatted scope and purpose section
         """
-        
+        '''
         # First, extract any tables from the protocol
         tables = self._extract_tables_from_protocol(protocol_content)
         
@@ -139,12 +139,12 @@ class ScopeAndPurposeAgent(BaseDVTAgent):
             headers_lower = [h.lower() for h in table["headers"]]
             if any(keyword in ' '.join(headers_lower) for keyword in ['doc id', 'req id', 'requirement', 'doc_id', 'req_id']):
                 scope_tables.append(table)
-        
+        '''
         # Generate prompt with table data
         prompt = DVTPrompts.scope_and_purpose_prompt(
             protocol_content, protocol_number, project_name
         )
-        
+        '''
         # If we found scope tables, add them to the prompt
         if scope_tables:
             table_section = "\n\nIMPORTANT - TABLES FOUND IN SCOPE SECTION:\n"
@@ -152,26 +152,26 @@ class ScopeAndPurposeAgent(BaseDVTAgent):
                 table_section += f"\nTable {i+1}:\n{table['markdown']}\n"
             table_section += "\nThese tables MUST be included in the SCOPE section exactly as shown above.\n"
             prompt += table_section
-        
+        '''
         try:
             content = await self.generate_content(
                 prompt, 
                 temperature=AgentConfig.get_temperature("scope_and_purpose")
             )
-            
+            '''
             # If AI didn't include the tables, append them manually
             if scope_tables and not any('|' in line for line in content.split('\n')):
                 content += "\n\n"
                 for table in scope_tables:
                     content += f"\n{table['markdown']}\n"
-            
+            '''
             # Parse the generated content
             metadata = {
                 "protocol_number": protocol_number,
                 "project_name": project_name,
                 "extraction_method": "ai_adaptation",
-                "tables_found": len(scope_tables),
-                "tables_included": len(scope_tables) > 0
+                #"tables_found": len(scope_tables),
+                #"tables_included": len(scope_tables) > 0
             }
             
             return TaskResult(
@@ -531,7 +531,7 @@ class DeviceUnderTestAgent(BaseDVTAgent):
             print(f"🔍 [TASK 4.5 DEBUG] Number of data files: {len(data_files) if data_files else 0}")
             print("🔍 [TASK 4.5 DEBUG] Excel data content:")
             print("=" * 80)
-            print(excel_data)
+            #print(excel_data)
             print("=" * 80)
             
             # Count DUT first before creating prompt
@@ -1726,18 +1726,6 @@ class TestResultSummaryAgent(BaseDVTAgent):
                         
         else:
             debug_info.append(f"   - actual_data is {type(actual_data)} with {len(actual_data)} items")
-
-        # Write debug info to file
-        try:
-            with open("task_4_7_debug.log", "w", encoding="utf-8") as f:
-                f.write("\n".join(debug_info))
-                f.write(f"\n\nFull actual_data content:\n{json.dumps(actual_data, indent=2, default=str, ensure_ascii=False)}")
-        except Exception as e:
-            print(f"Warning: Could not write debug file: {e}")
-        
-        # Also print to console
-        for line in debug_info:
-            print(line)
 
         try:
             # Only process if actual_data is a dictionary

@@ -333,7 +333,7 @@ async def parse_document_for_ai(file: UploadFile) -> str:
     parsed_data = await parser.parse_document(file)
     return parser.format_for_ai_prompt()
 
-
+'''
 # 测试函数
 async def test_document_parser():
     """测试文档解析器"""
@@ -379,3 +379,4 @@ async def test_document_parser():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(test_document_parser())
+'''

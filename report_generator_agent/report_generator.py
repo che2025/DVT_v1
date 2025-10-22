@@ -109,7 +109,7 @@ class DVTReportGenerator:
                     if parsed_doc_data:
                         print(f"✅ Document parsed successfully:")
                         print(f"   - Found {len(parsed_doc_data)} sections")
-                        
+                        '''
                         # Print section summary
                         for section_num, content in parsed_doc_data.items():
                             if isinstance(content, dict):
@@ -120,7 +120,7 @@ class DVTReportGenerator:
                                 print(f"   - {section_num}: [文本内容]")
                         
                         # Print complete raw data dictionary
-                        print(f"\n📊 COMPLETE DOCUMENT RAW DATA:")
+                        print(f" COMPLETE DOCUMENT RAW DATA:")
                         print("="*80)
                         import json
                         try:
@@ -128,14 +128,15 @@ class DVTReportGenerator:
                         except:
                             print(parsed_doc_data)
                         print("="*80)
-                        
+                        '''
                         # Get AI-friendly format
                         ai_formatted = doc_parser.format_for_ai_prompt()
+                        '''
                         print(f"\n📊 DOCUMENT AI-FRIENDLY FORMAT:")
                         print("="*60)
                         print(ai_formatted[:2000] + "..." if len(ai_formatted) > 2000 else ai_formatted)
                         print("="*60)
-                        
+                        '''
                         # Store structured document data
                         results["protocol_data"] = {
                             "raw_data": parsed_doc_data,
@@ -192,8 +193,8 @@ class DVTReportGenerator:
                             print(f"   - Sample DUT: {sample_key}")
                             print(f"   - Columns: {list(test_article_data[sample_key].keys())}")
                         
-                        
-                        print(f"\n📊 COMPLETE TEST ARTICLE RAW DATA:")
+                        '''
+                        print(f"COMPLETE TEST ARTICLE RAW DATA:")
                         print("="*80)
                         import json
                    
@@ -201,17 +202,16 @@ class DVTReportGenerator:
                             print(json.dumps(test_article_data, indent=2, default=str))
                         except:
                             print(test_article_data)
-                         
-                        
                         print("="*80)
-                        
+                        '''
                         # Store with AI-friendly format
                         ai_prompt_data = test_article_parser.format_for_ai_prompt()
+                        '''
                         print(f"\n📊 TEST ARTICLE AI-FRIENDLY FORMAT:")
                         print("="*60)
                         print(ai_prompt_data)
                         print("="*60)
-                        
+                        '''
                         # Get statistics from test article parser
                         statistics = {
                             "total_units": len(test_article_data),
@@ -231,6 +231,7 @@ class DVTReportGenerator:
                     equipment_sheets_data = await equipment_used_parser.parse_uploaded_file(data_file)
                     
                     if equipment_sheets_data:
+                        '''
                         print(f"✅ Equipment sheets data parsed successfully:")
                         for sheet_name, sheet_data in equipment_sheets_data.items():
                             print(f"   - {sheet_name}: {len(sheet_data)} rows")
@@ -244,14 +245,10 @@ class DVTReportGenerator:
                         except:
                             print(equipment_sheets_data)
                         print("="*80)
-                        
+                        '''
                         # Store with AI-friendly format
                    
                         ai_prompt_data = equipment_used_parser.format_for_ai_prompt()
-                        print(f"\n📊 EQUIPMENT LOGS AI-FRIENDLY FORMAT:")
-                        print("="*60)
-                        print(ai_prompt_data)
-                        print("="*60)
                        
                         results["parsed_excel_data"]["equipment_logs"] = {
                             "raw_data": equipment_sheets_data,
@@ -263,28 +260,12 @@ class DVTReportGenerator:
                     # Parse Deviations
                     print("🔍 Parsing DEVIATIONS sheets...")
                     deviations_data = await deviations_parser.parse_uploaded_file(data_file)
-                    
+
+
                     if deviations_data:
                         print(f"✅ Deviations data parsed successfully:")
-                        for sheet_name, sheet_data in deviations_data.items():
-                            print(f"   - {sheet_name}: {sheet_data['row_count']} deviations")
-                        
-                        # Print complete raw data dictionary
-                        print(f"\n📊 COMPLETE DEVIATIONS RAW DATA:")
-                        print("="*80)
-                        import json
-                        try:
-                            print(json.dumps(deviations_data, indent=2, default=str))
-                        except:
-                            print(deviations_data)
-                        print("="*80)
-                        
                         # Store with AI-friendly format
                         ai_prompt_data = deviations_parser.format_for_ai_prompt()
-                        print(f"\n📊 DEVIATIONS AI-FRIENDLY FORMAT:")
-                        print("="*60)
-                        print(ai_prompt_data)
-                        print("="*60)
                         
                         results["parsed_excel_data"]["deviations"] = {
                             "raw_data": deviations_data,
@@ -292,32 +273,21 @@ class DVTReportGenerator:
                         }
                     else:
                         print("ℹ️ No DEVIATIONS sheets found in this file")
+
                     
                     # Parse Defective Units
                     print("🔍 Parsing DEFECTIVE UNITS sheets...")
                     defective_units_data = await defective_units_parser.parse_uploaded_file(data_file)
                     
                     if defective_units_data:
-                        print(f"✅ Defective units data parsed successfully:")
-                        for sheet_name, sheet_data in defective_units_data.items():
-                            print(f"   - {sheet_name}: {sheet_data['row_count']} defective units")
-                        
-                        # Print complete raw data dictionary
-                        print(f"\n📊 COMPLETE DEFECTIVE UNITS RAW DATA:")
-                        print("="*80)
-                        import json
-                        try:
-                            print(json.dumps(defective_units_data, indent=2, default=str))
-                        except:
-                            print(defective_units_data)
-                        print("="*80)
-                        
                         # Store with AI-friendly format
                         ai_prompt_data = defective_units_parser.format_for_ai_prompt()
-                        print(f"\n📊 DEFECTIVE UNITS AI-FRIENDLY FORMAT:")
+                        '''
+                        print(f"DEFECTIVE UNITS AI-FRIENDLY FORMAT:")
                         print("="*60)
                         print(ai_prompt_data)
                         print("="*60)
+                        '''
                         
                         results["parsed_excel_data"]["defective_units"] = {
                             "raw_data": defective_units_data,
