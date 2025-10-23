@@ -189,6 +189,224 @@ class ScopeAndPurposeAgent(BaseDVTAgent):
             )
 
 
+class PurposeAgent(BaseDVTAgent):
+    """
+    AI Agent for Task 4.1a: Generate Purpose section
+    Processes parsed protocol data to generate purpose content for [BK_PURPOSE_TEXT]
+    """
+
+    def __init__(self, client, model_name: str = None):
+        super().__init__(client, model_name)
+        self.default_temperature = AgentConfig.get_temperature("scope_and_purpose")
+
+    def _extract_purpose_data(self, parsed_protocol_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract the Purpose section from parsed protocol data"""
+        for key, section in parsed_protocol_data.items():
+            if isinstance(section, dict) and section.get("title", "").lower() == "purpose":
+                return section
+        return None
+
+    def _serialize_purpose_content(self, purpose_section: Dict[str, Any]) -> str:
+        """Convert purpose section data to readable text"""
+        content_parts = []
+
+        # Extract all content_* fields in order
+        content_keys = sorted([k for k in purpose_section.keys() if k.startswith("content_")],
+                             key=lambda x: int(x.split('_')[1]) if x.split('_')[1].isdigit() else x)
+
+        for key in content_keys:
+            value = purpose_section[key]
+            if isinstance(value, str):
+                content_parts.append(value.strip())
+            elif isinstance(value, dict) and value.get("type") == "table":
+                # Convert table to text description
+                table_data = value.get("data", [])
+                if table_data:
+                    content_parts.append(f"Requirements table with {len(table_data)} entries")
+
+        return "\n\n".join(content_parts)
+
+    async def generate_purpose(self, parsed_protocol_data: Dict[str, Any], protocol_number: str,
+                              project_name: str) -> TaskResult:
+        """
+        Generate purpose content from parsed protocol data
+
+        Args:
+            parsed_protocol_data: The structured data from doc parser
+            protocol_number: Protocol document number and revision
+            project_name: Project name for the report
+
+        Returns:
+            TaskResult with purpose content for [BK_PURPOSE_TEXT]
+        """
+        try:
+            # Extract purpose section
+            purpose_section = self._extract_purpose_data(parsed_protocol_data)
+            if not purpose_section:
+                return TaskResult(
+                    success=False,
+                    content="",
+                    metadata={},
+                    error="Purpose section not found in parsed protocol data"
+                )
+
+            # Convert to readable content
+            purpose_content = self._serialize_purpose_content(purpose_section)
+
+            # Generate AI prompt
+            prompt = DVTPrompts.purpose_prompt(parsed_protocol_data, protocol_number, project_name)
+
+            # Generate content
+            content = await self.generate_content(
+                prompt,
+                temperature=self.default_temperature
+            )
+
+            metadata = {
+                "protocol_number": protocol_number,
+                "project_name": project_name,
+                "extraction_method": "parsed_data",
+                "section_found": True
+            }
+
+            return TaskResult(
+                success=True,
+                content=content.strip(),
+                metadata=metadata
+            )
+
+        except Exception as e:
+            return TaskResult(
+                success=False,
+                content="",
+                metadata={},
+                error=str(e)
+            )
+
+
+class ScopeAgent(BaseDVTAgent):
+    """
+    AI Agent for Task 4.1b: Generate Scope section
+    Processes parsed protocol data to generate scope content for [BK_SCOPE_TEXT]
+    """
+
+    def __init__(self, client, model_name: str = None):
+        super().__init__(client, model_name)
+        self.default_temperature = AgentConfig.get_temperature("scope_and_purpose")
+
+    def _extract_scope_data(self, parsed_protocol_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract the Scope section from parsed protocol data"""
+        for key, section in parsed_protocol_data.items():
+            if isinstance(section, dict) and section.get("title", "").lower() == "scope":
+                return section
+        return None
+
+    def _serialize_scope_content(self, scope_section: Dict[str, Any]) -> str:
+        """Convert scope section data to readable text, including table conversion"""
+        content_parts = []
+
+        # Extract all content_* fields in order
+        content_keys = sorted([k for k in scope_section.keys() if k.startswith("content_")],
+                             key=lambda x: int(x.split('_')[1]) if x.split('_')[1].isdigit() else x)
+
+        for key in content_keys:
+            value = scope_section[key]
+            if isinstance(value, str):
+                content_parts.append(value.strip())
+            elif isinstance(value, dict) and value.get("type") == "table":
+                # Convert table data to narrative text
+                table_data = value.get("data", [])
+                if table_data:
+                    table_text = self._table_to_narrative(table_data)
+                    content_parts.append(table_text)
+
+        return "\n\n".join(content_parts)
+
+    def _table_to_narrative(self, table_data: List[Dict[str, Any]]) -> str:
+        """Convert table data to narrative text"""
+        if not table_data:
+            return ""
+
+        narratives = []
+        for row in table_data:
+            row_parts = []
+            for key, value in row.items():
+                if value and str(value).strip():
+                    row_parts.append(f"{key}: {value}")
+            if row_parts:
+                narratives.append("; ".join(row_parts))
+
+        if narratives:
+            return f"The requirements include: {'; '.join(narratives)}"
+        return ""
+
+    async def generate_scope(self, parsed_protocol_data: Dict[str, Any], protocol_number: str,
+                            project_name: str) -> TaskResult:
+        """
+        Generate scope content from parsed protocol data
+
+        Args:
+            parsed_protocol_data: The structured data from doc parser
+            protocol_number: Protocol document number and revision
+            project_name: Project name for the report
+
+        Returns:
+            TaskResult with scope content for [BK_SCOPE_TEXT]
+        """
+        try:
+            # Extract scope section
+            scope_section = self._extract_scope_data(parsed_protocol_data)
+            if not scope_section:
+                return TaskResult(
+                    success=False,
+                    content="",
+                    metadata={},
+                    error="Scope section not found in parsed protocol data"
+                )
+
+            # Convert to readable content
+            scope_content = self._serialize_scope_content(scope_section)
+
+            # Generate AI prompt
+            prompt = DVTPrompts.scope_prompt(parsed_protocol_data, protocol_number, project_name)
+
+            # Generate content
+            content = await self.generate_content(
+                prompt,
+                temperature=self.default_temperature
+            )
+
+            metadata = {
+                "protocol_number": protocol_number,
+                "project_name": project_name,
+                "extraction_method": "parsed_data",
+                "section_found": True,
+                "tables_converted": self._count_tables(scope_section)
+            }
+
+            return TaskResult(
+                success=True,
+                content=content.strip(),
+                metadata=metadata
+            )
+
+        except Exception as e:
+            return TaskResult(
+                success=False,
+                content="",
+                metadata={},
+                error=str(e)
+            )
+
+    def _count_tables(self, scope_section: Dict[str, Any]) -> int:
+        """Count number of tables in scope section"""
+        count = 0
+        for key, value in scope_section.items():
+            if key.startswith("content_") and isinstance(value, dict) and value.get("type") == "table":
+                count += 1
+        return count
+
+
 class ReferenceAgent(BaseDVTAgent):
     """
     AI Agent for Task 4.2: Create Reference Section
@@ -1410,7 +1628,8 @@ class DVTAgentOrchestrator:
         self.model_name = model_name or AgentConfig.DEFAULT_MODEL
         
         # Initialize all specialized agents
-        self.scope_agent = ScopeAndPurposeAgent(client, model_name)
+        self.purpose_agent = PurposeAgent(client, model_name)
+        self.scope_agent = ScopeAgent(client, model_name)
         self.reference_agent = ReferenceAgent(client, model_name)
         self.procedure_agent = TestProcedureSummaryAgent(client, model_name)
         self.acronyms_agent = AcronymsDefinitionsAgent(client, model_name)
@@ -1433,14 +1652,47 @@ class DVTAgentOrchestrator:
             Dictionary with results for each task
         """
         
+    async def execute_tasks_4_1_to_4_4(self, protocol_content: str, protocol_number: str,
+                                      project_name: str, report_content: str = "",
+                                      parsed_protocol_data: Dict[str, Any] = None) -> Dict[str, TaskResult]:
+        """
+        Execute AI tasks 4.1-4.4 in proper order
+
+        Args:
+            protocol_content: Protocol document content (legacy support)
+            protocol_number: Protocol document number and revision
+            project_name: Project name for the report
+            report_content: Complete report content (for task 4.3, executed last)
+            parsed_protocol_data: Structured data from doc parser (preferred input)
+
+        Returns:
+            Dictionary with results for each task
+        """
+
         results = {}
         
-        # Task 4.1: Create Scope and Purpose
-        print("🚀 Executing Task 4.1: Create Scope and Purpose")
-        results["task_4_1"] = await self.scope_agent.create_scope_and_purpose(
-            protocol_content, protocol_number, project_name
-        )
-        
+        # Task 4.1: Create Purpose and Scope (now split into two separate tasks)
+        if parsed_protocol_data:
+            print("🚀 Executing Task 4.1a: Generate Purpose from parsed data")
+            results["task_4_1_purpose"] = await self.purpose_agent.generate_purpose(
+                parsed_protocol_data, protocol_number, project_name
+            )
+
+            print("🚀 Executing Task 4.1b: Generate Scope from parsed data")
+            results["task_4_1_scope"] = await self.scope_agent.generate_scope(
+                parsed_protocol_data, protocol_number, project_name
+            )
+        else:
+            # 【Fallback to legacy】 method if no parsed data available
+            print("⚠️ No parsed protocol data available, using legacy ScopeAndPurposeAgent")
+            legacy_scope_agent = ScopeAndPurposeAgent(self.client, self.model_name)
+            legacy_result = await legacy_scope_agent.create_scope_and_purpose(
+                protocol_content, protocol_number, project_name
+            )
+            # Split the legacy result for backward compatibility
+            results["task_4_1_purpose"] = legacy_result
+            results["task_4_1_scope"] = legacy_result
+
         # Task 4.2: Create Reference Section  
         print("🚀 Executing Task 4.2: Create Reference Section")
         # Use protocol content to scan for document references

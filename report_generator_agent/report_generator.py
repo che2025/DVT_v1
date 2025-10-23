@@ -31,8 +31,8 @@ class DVTReportGenerator:
         # Template configuration
         self.template_path = "Inputs/FT-010334_Report_RPT_Template_copy.docx"
         self.placeholder_mapping = {
-            '[BK_PURPOSE_TEXT]': 'task_4_1',  # Will extract PURPOSE section
-            '[BK_SCOPE_TEXT]': 'task_4_1',    # Will extract SCOPE section
+            '[BK_PURPOSE_TEXT]': 'task_4_1_purpose',
+            '[BK_SCOPE_TEXT]': 'task_4_1_scope',
             '[BK_REFERENCES]': 'task_4_2',
             '[BK_ACRONYMS]': 'task_4_3',      # Will extract ACRONYMS section
             '[BK_DEFINITIONS]': 'task_4_3',   # Will extract DEFINITIONS section
@@ -456,13 +456,24 @@ class DVTReportGenerator:
             protocol_number = report_config.get("protocol_number", "TBD")
             project_name = report_config.get("project_name", "DVT Project")
             
-            # Execute AI Tasks 4.1, 4.2, 4.4 first (4.3 will be done last)
-            print("🤖 Executing AI Tasks 4.1, 4.2, 4.4 with specialized agents...")
+            # Extract parsed protocol data from doc parser (preferred)
+            parsed_protocol_data = None
+
+            # Try multiple possible locations for parsed data
+            if "raw_data" in protocol_data:
+                # This is where the structured doc parser stores the data
+                parsed_protocol_data = protocol_data.get("raw_data", None)
+                print(f"🔍 Found raw_data with {len(parsed_protocol_data)} sections" if parsed_protocol_data else "🔍 raw_data is empty")
+
+            else:
+                print("⚠️ No parsed protocol data available, falling back to legacy text parsing")
+
             ai_results = await self.ai_orchestrator.execute_tasks_4_1_to_4_4(
                 protocol_content=protocol_content,
                 protocol_number=protocol_number,
                 project_name=project_name,
-                report_content=""  # Empty for now, will update for Task 4.3 later
+                report_content="",  # Empty for now, will update for Task 4.3 later
+                parsed_protocol_data=parsed_protocol_data  # New parameter
             )
             
             # Execute Task 4.5: Device Under Test Configuration
@@ -490,14 +501,24 @@ class DVTReportGenerator:
                     sections["task_4_5"] = f"Error in task_4_5: {task_4_5_result.error if task_4_5_result else 'Unknown error'}"
             
             # Process AI results in correct order
-            if ai_results.get("task_4_1") and ai_results["task_4_1"].success:
-                print("✅ task_4_1 completed successfully")
-                sections["task_4_1"] = ai_results["task_4_1"].content
+            # Task 4.1a: Purpose
+            if ai_results.get("task_4_1_purpose") and ai_results["task_4_1_purpose"].success:
+                print("✅ task_4_1_purpose completed successfully")
+                sections["task_4_1_purpose"] = ai_results["task_4_1_purpose"].content
             else:
-                error_msg = ai_results["task_4_1"].error if ai_results.get("task_4_1") else "Unknown error"
-                print(f"❌ task_4_1 failed: {error_msg}")
-                sections["task_4_1"] = f"Error in task_4_1: {error_msg}"
-                
+                error_msg = ai_results["task_4_1_purpose"].error if ai_results.get("task_4_1_purpose") else "Unknown error"
+                print(f"❌ task_4_1_purpose failed: {error_msg}")
+                sections["task_4_1_purpose"] = f"Error in task_4_1_purpose: {error_msg}"
+
+            # Task 4.1b: Scope
+            if ai_results.get("task_4_1_scope") and ai_results["task_4_1_scope"].success:
+                print("✅ task_4_1_scope completed successfully")
+                sections["task_4_1_scope"] = ai_results["task_4_1_scope"].content
+            else:
+                error_msg = ai_results["task_4_1_scope"].error if ai_results.get("task_4_1_scope") else "Unknown error"
+                print(f"❌ task_4_1_scope failed: {error_msg}")
+                sections["task_4_1_scope"] = f"Error in task_4_1_scope: {error_msg}"
+
             if ai_results.get("task_4_2") and ai_results["task_4_2"].success:
                 print("✅ task_4_2 completed successfully")
                 sections["task_4_2"] = ai_results["task_4_2"].content

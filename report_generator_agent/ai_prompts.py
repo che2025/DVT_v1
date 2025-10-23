@@ -80,6 +80,77 @@ Now generate the adapted scope and purpose content (no headers, keep concise):
 """
 
     @staticmethod
+    def purpose_prompt(parsed_protocol_data: Dict[str, Any], protocol_number: str, project_name: str) -> str:
+        """
+        Prompt for Task 4.1a: Generate Purpose section from parsed protocol data
+        """
+        return f"""
+You are an expert technical writer specializing in DVT (Design Verification Testing) reports. Your task is to generate a PURPOSE section for a test report based on parsed protocol data.
+
+INPUTS:
+- Protocol Document Number: {protocol_number}
+- Project Name: {project_name}
+- Parsed Protocol Data: {parsed_protocol_data}
+
+TASK:
+1. Find the section with title "Purpose" in the parsed data
+2. Extract all content_* fields from that section
+3. Adapt the purpose statement for a DVT test report
+
+ADAPTATION RULES:
+- Change "The purpose of this protocol is to..." to "The purpose of this report is to document the results of..."
+- Add reference to protocol number: "...executed under protocol {protocol_number}"
+- Keep the technical content accurate but adapt the perspective from "protocol definition" to "report documentation"
+
+OUTPUT REQUIREMENTS:
+- Return ONLY the purpose content text (NO "PURPOSE" header)
+- Keep content concise (1-2 paragraphs maximum)
+- Focus on what was tested and verified, not the testing methodology
+- Content will be inserted directly into template at [BK_PURPOSE_TEXT] placeholder
+
+Generate the purpose content now:
+"""
+
+    @staticmethod
+    def scope_prompt(parsed_protocol_data: Dict[str, Any], protocol_number: str, project_name: str) -> str:
+        """
+        Prompt for Task 4.1b: Generate Scope section from parsed protocol data
+        """
+        return f"""
+You are an expert technical writer specializing in DVT (Design Verification Testing) reports. Your task is to generate a SCOPE section for a test report based on parsed protocol data.
+
+INPUTS:
+- Protocol Document Number: {protocol_number}
+- Project Name: {project_name}
+- Parsed Protocol Data: {parsed_protocol_data}
+
+TASK:
+1. Find the section with title "Scope" in the parsed data
+2. Extract all content_* fields from that section
+3. Convert any table data into narrative text (do NOT create markdown tables)
+4. Adapt the scope statement for a DVT test report
+
+ADAPTATION RULES:
+- Add "for project {project_name}" to the main scope statement
+- Keep high-level and concise, focused on what the test covers
+- For table data with requirements, convert to narrative text like: "The testing addresses requirements including [list key requirements]"
+- Change perspective from "protocol applicability" to "report coverage"
+
+TABLE HANDLING:
+- If content contains table data (type: "table"), convert it to descriptive text
+- Extract key requirement information and present as narrative
+- Do NOT create markdown tables - convert to flowing text
+
+OUTPUT REQUIREMENTS:
+- Return ONLY the scope content text (NO "SCOPE" header)
+- Keep content concise and high-level (1-3 paragraphs maximum)
+- Convert all table data to narrative text
+- Content will be inserted directly into template at [BK_SCOPE_TEXT] placeholder
+
+Generate the scope content now:
+"""
+
+    @staticmethod
     def reference_section_prompt(report_content: str) -> str:
         """
         Prompt for Task 4.2: Create Reference Section
