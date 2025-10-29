@@ -283,6 +283,28 @@ document.addEventListener('DOMContentLoaded', function() {
             missingFields.push('Modification Details');
         }
         
+        // Check Test Execution Chronology (now required)
+        const chronologyHiddenInput = document.getElementById('test_execution_chronology');
+        let hasChronologyData = false;
+        if (chronologyHiddenInput && chronologyHiddenInput.value) {
+            try {
+                const chronologyData = JSON.parse(chronologyHiddenInput.value);
+                hasChronologyData = chronologyData.length > 0 && chronologyData.some(entry =>
+                    entry.step.trim() || entry.start_date || entry.end_date || entry.location.trim()
+                );
+            } catch (e) {
+                console.error('Error parsing chronology data:', e);
+            }
+        }
+        if (!hasChronologyData) {
+            missingFields.push('Test Execution Chronology');
+        }
+
+        // Check Test Result Analysis Images (now required)
+        if (selectedImageFiles.length === 0) {
+            missingFields.push('Test Result Analysis Images');
+        }
+
         // If there are missing fields, show error and prevent submission
         console.log('Missing fields found:', missingFields);
         if (missingFields.length > 0) {
@@ -321,7 +343,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Project Name': 'project_name',
                     'Document Owner': 'document_owner',
                     'Protocol Document': 'protocol_file',
-                    'Test Data Files': 'data_files'
+                    'Test Data Files': 'data_files',
+                    'Test Execution Chronology': 'chronology_table',
+                    'Test Result Analysis Images': 'upload_area'
                 };
                 
                 const fieldId = fieldMap[fieldName];
@@ -341,17 +365,45 @@ document.addEventListener('DOMContentLoaded', function() {
                         uploadArea.style.borderColor = '';
                         uploadArea.style.backgroundColor = '';
                     }, 3000);
+                } else if (fieldId === 'chronology_table') {
+                    // Highlight chronology table
+                    const chronologyTable = document.getElementById('chronologyTable');
+                    if (chronologyTable) {
+                        chronologyTable.style.borderColor = '#dc3545';
+                        chronologyTable.style.backgroundColor = '#f8d7da';
+
+                        // Remove highlight after 3 seconds
+                        setTimeout(() => {
+                            chronologyTable.style.borderColor = '';
+                            chronologyTable.style.backgroundColor = '';
+                        }, 3000);
+                    }
+                } else if (fieldId === 'upload_area') {
+                    // Highlight image upload area
+                    const imageUploadArea = document.getElementById('uploadArea');
+                    if (imageUploadArea) {
+                        imageUploadArea.style.borderColor = '#dc3545';
+                        imageUploadArea.style.backgroundColor = '#f8d7da';
+
+                        // Remove highlight after 3 seconds
+                        setTimeout(() => {
+                            imageUploadArea.style.borderColor = '';
+                            imageUploadArea.style.backgroundColor = '';
+                        }, 3000);
+                    }
                 } else {
                     // Highlight input field
                     const input = document.getElementById(fieldId);
-                    input.style.borderColor = '#dc3545';
-                    input.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
-                    
-                    // Remove highlight after 3 seconds
-                    setTimeout(() => {
-                        input.style.borderColor = '';
-                        input.style.boxShadow = '';
-                    }, 3000);
+                    if (input) {
+                        input.style.borderColor = '#dc3545';
+                        input.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+
+                        // Remove highlight after 3 seconds
+                        setTimeout(() => {
+                            input.style.borderColor = '';
+                            input.style.boxShadow = '';
+                        }, 3000);
+                    }
                 }
             });
             

@@ -559,7 +559,7 @@ class DVTReportGenerator:
                 print("📝 Created empty Test Execution Chronology table")
             
             # Create Test Result Analysis Images section
-            image_paths = sections.get("analysis_image_paths", [])
+            image_paths = analysis_image_paths if analysis_image_paths else []
             sections["test_result_analysis_images"] = self.create_test_result_analysis_images(image_paths)
             print(f"✅ Created Test Result Analysis with {len(image_paths)} images")
             
@@ -774,8 +774,6 @@ class DVTReportGenerator:
     def insert_analysis_images(self, doc, paragraph, image_placeholder: str):
         """Insert analysis images into Word document"""
         try:
-            from PIL import Image
-            
             print(f"🖼️ [DEBUG] Processing image placeholder: {image_placeholder}")
             
             # Parse the placeholder: {ANALYSIS_IMAGES:count:path1|path2|...}
@@ -806,9 +804,13 @@ class DVTReportGenerator:
                     continue
                 
                 try:
+                    # Clear the paragraph content if this is the first image
+                    if i == 0:
+                        paragraph.clear()
+
                     # Add image to paragraph without any size specification
                     # This preserves the original image quality and lets Word decide the display size
-                    run = paragraph.runs[0] if paragraph.runs else paragraph.add_run()
+                    run = paragraph.add_run()
                     run.add_picture(image_path)  # No width/height parameters = original quality
                     
                     # Add a line break after each image except the last one
@@ -819,15 +821,21 @@ class DVTReportGenerator:
                     
                 except Exception as e:
                     print(f"🖼️ [ERROR] Failed to insert image {image_path}: {e}")
+                    # Add error message to document instead of failing silently
+                    error_run = paragraph.add_run()
+                    error_run.text = f"[Image insertion failed: {os.path.basename(image_path)}]"
+                    error_run.font.color.rgb = RGBColor(255, 0, 0)  # Red color for error
                     continue
             
             print(f"🖼️ [DEBUG] Completed inserting {len(image_paths)} images")
             
-        except ImportError:
-            print("🖼️ [ERROR] PIL (Pillow) not available for image processing")
         except Exception as e:
             print(f"🖼️ [ERROR] Failed to process images: {e}")
-    
+            # Add error message to document
+            error_run = paragraph.add_run()
+            error_run.text = f"[Image processing failed: {str(e)}]"
+            error_run.font.color.rgb = RGBColor(255, 0, 0)  # Red color for error
+
     def create_test_result_analysis_images(self, image_paths: List[str]) -> str:
         """Create Test Result Analysis Images section for Word document"""
         print(f"🖼️ [DEBUG] create_test_result_analysis_images called with {len(image_paths)} images")
