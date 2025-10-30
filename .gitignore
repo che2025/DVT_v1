@@ -43,9 +43,13 @@ venv.bak/
 
 # Output files
 Output/
+# Exclude office files except in Inputs folder (templates needed for deployment)
 *.docx
 *.xlsx
 *.xls
+!Inputs/*.docx
+!Inputs/*.xlsx
+!Inputs/*.xls
 temp/
 
 # Logs
