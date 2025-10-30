@@ -100,11 +100,6 @@ secrets/
 *.crt
 *.pem
 
-# Input files - don't upload test data to GitHub
-Inputs/
-*.docx
-*.xlsx
-
 # Backup files
 *.bak
 *.backup
